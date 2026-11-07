@@ -1,0 +1,10 @@
+{
+  "name": "ecomcrm-leads",
+  "version": "1.0.0",
+  "private": true,
+  "description": "eComCRM lead capture and follow-up pipeline for Cube Tech Enterprises",
+  "engines": { "node": "22.x" },
+  "scripts": { "test": "node test/run.js" },
+  "dependencies": { "@neondatabase/serverless": "^1.0.0" },
+  "devDependencies": { "@electric-sql/pglite": "^0.3.0" }
+}

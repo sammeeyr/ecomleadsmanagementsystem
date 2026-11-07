@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>eComCRM by Cube Tech Enterprises</title>
+<meta name="description" content="Run your orders, live tracking and WhatsApp inbox from one place. Tell us about your business and book a demo.">
+<link rel="icon" href="/mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="mark-tile"><img src="/mark.png" alt=""></div>
+    <div class="brand"><b>eCom<span>CRM</span></b><small>by Cube Tech Enterprises &middot; Sell &middot; Manage &middot; Grow</small></div>
+  </div>
+</header>
+
+<main class="view-capture">
+  <section class="intro">
+    <h1>Run your orders and WhatsApp from one place</h1>
+    <p>eComCRM captures every order, tracks it live and gives your team a shared WhatsApp inbox with AI replies.</p>
+    <div class="proof"><span>One business: 18,000+ orders and &#8358;200m+ in 7 months</span></div>
+  </section>
+  <section class="panel" id="capBody"></section>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/common.js"></script>
+<script>
+(function () {
+'use strict';
+var EC = window.EC, $ = EC.$, esc = EC.esc, body = $('#capBody');
+
+function showForm() {
+  body.innerHTML = EC.formHTML('f-', false);
+  $('#f-form').addEventListener('submit', onSubmit);
+}
+
+function message(d) {
+  var lines = ["Hello Cube Tech, I'm interested in eComCRM.", 'Name: ' + d.name, 'Business: ' + d.business, 'WhatsApp: ' + d.phone];
+  if (d.email) lines.push('Email: ' + d.email);
+  if (d.bizType) lines.push('We sell: ' + d.bizType);
+  if (d.volume) lines.push('Orders: ' + d.volume);
+  if (d.pains.length) lines.push('Biggest problems: ' + d.pains.join(', '));
+  if (d.notes) lines.push('Notes: ' + d.notes);
+  return lines.join('\n');
+}
+
+function thanks(d) {
+  var wa = EC.WA_NUMBER.replace(/\D/g, '');
+  var hi = 'Hello Cube Tech, this is ' + d.name + ' from ' + d.business + '. I just filled in the eComCRM form.';
+  body.innerHTML =
+    '<h2 style="font-size:22px;margin-bottom:8px">Thank you, ' + esc(EC.first(d)) + '</h2>' +
+    '<p style="margin:0 0 14px;color:var(--muted)">We have your details. Cube Tech will message you on WhatsApp soon to book your demo.</p>' +
+    (wa ? '<div class="row"><a class="btn wa" target="_blank" rel="noopener" href="' + EC.waLink(wa, hi) + '">Message us on WhatsApp now</a></div>' : '');
+}
+
+function fallback(d, why) {
+  var text = message(d), wa = EC.WA_NUMBER.replace(/\D/g, '');
+  body.innerHTML =
+    '<h2 style="font-size:20px;margin-bottom:6px">One last step, ' + esc(EC.first(d)) + '</h2>' +
+    '<p style="margin:0 0 12px;color:var(--muted)">' + esc(why) + ' Send this message on WhatsApp so Cube Tech can book your demo.</p>' +
+    '<div class="msgbox">' + esc(text) + '</div>' +
+    '<div class="row" style="margin-top:14px">' + (wa ? '<a class="btn wa" href="' + EC.waLink(wa, text) + '" target="_blank" rel="noopener">Open WhatsApp</a>' : '') +
+    '<button class="btn" type="button" id="copyMsg">Copy message</button></div>';
+  $('#copyMsg').onclick = function () { EC.copyText(text); };
+}
+
+async function onSubmit(e) {
+  e.preventDefault();
+  var d = EC.readForm('f-', false), msg = EC.validate(d), err = $('#f-err'), btn = $('#f-form button[type="submit"]');
+  if (msg) { err.textContent = msg; return; }
+  err.textContent = ''; btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    var r = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+    var j = await r.json().catch(function () { return {}; });
+    if (r.ok) return thanks(d);
+    if (r.status === 400 || r.status === 429) { err.textContent = j.message || 'Please check your details and try again.'; btn.disabled = false; btn.textContent = 'Send my details'; return; }
+    fallback(d, 'We could not save your details just now.');
+  } catch (x) {
+    fallback(d, 'We could not reach the server.');
+  }
+}
+
+showForm();
+})();
+</script>
+</body>
+</html>
